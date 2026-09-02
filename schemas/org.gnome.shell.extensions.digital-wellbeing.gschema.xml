@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.digital-wellbeing"
+          path="/org/gnome/shell/extensions/digital-wellbeing/">
+
+    <key name="show-indicator" type="b">
+      <default>true</default>
+      <summary>Show indicator</summary>
+      <description>Whether to show the uptime indicator in the top bar.</description>
+    </key>
+
+    <key name="format" type="s">
+      <default>"compact"</default>
+      <choices>
+        <choice value="compact"/>
+        <choice value="clock"/>
+        <choice value="verbose"/>
+      </choices>
+      <summary>Uptime format</summary>
+      <description>How uptime is shown in the top bar: compact (4h 1m), clock (4:01), or verbose (4 hours 1 minute).</description>
+    </key>
+
+  </schema>
+</schemalist>

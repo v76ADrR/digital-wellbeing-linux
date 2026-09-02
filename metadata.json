@@ -1,0 +1,15 @@
+{
+    "name": "Digital Wellbeing",
+    "description": "Shows machine uptime in the top bar.",
+    "uuid": "digital-wellbeing@local",
+    "url": "https://github.com/v76ADrR/digital-wellbeing-linux",
+    "shell-version": [
+        "50"
+    ],
+    "settings-schema": "org.gnome.shell.extensions.digital-wellbeing",
+    "session-modes": [
+        "user"
+    ],
+    "version": 1,
+    "version-name": "1.0"
+}
