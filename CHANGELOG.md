@@ -7,10 +7,15 @@ and version names match `metadata.json`.
 
 ## [1.4] - 2026-09-04
 
+### Added
+
+- Back and Close buttons on the App activity page (opened by tapping a weekday bar) and on App activity details
+- Display → About row for how the Screen Time graph is measured
+
 ### Changed
 
 - Tapping a weekday bar opens focused-app usage for that day, not always today
-- App activity and details subpages have Back and Close in the header
+- The tapped day stays highlighted on the week graph
 - Days before the extension was installed show an empty app view; the graph still uses GNOME screen time
 - Screen Time graph is documented as GNOME Shell TimeLimitsManager + logind session edges (Settings only displays that file; wellbeing day starts at 03:00 local)
 
@@ -20,6 +25,7 @@ and version names match `metadata.json`.
 
 - Screen Time graph (Today, This Week, day bars) now reads GNOME Shell’s session history, the same file Settings → Wellbeing uses
 - App donut and details still use focused-app time for today
+- App donut restyled to match Adwaita preferences theming
 
 ## [1.2] - 2026-09-03
 
