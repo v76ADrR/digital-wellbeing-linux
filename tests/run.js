@@ -3,6 +3,7 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
+import {barIndexAt, barLayout} from '../lib/chartLayout.js';
 import {formatScreenTime, formatUptime} from '../lib/duration.js';
 import {
     SessionHistory,
@@ -58,6 +59,14 @@ assert(grouped.slices.length === 3, 'two slices plus Other');
 assert(grouped.slices[2].isOther === true, 'remainder is Other');
 assert(grouped.slices[2].seconds === 3, 'other seconds');
 assert(groupAppsForDonut([]).slices.length === 0, 'empty donut');
+
+const layout = barLayout(400, 220, 7);
+assert(layout.count === 7, 'seven bars');
+assert(barIndexAt(layout.left + 2, 80, 400, 220, 7) === 0, 'tap first bar');
+assert(barIndexAt(layout.left + layout.barWidth + layout.gap + 2, 80, 400, 220, 7) === 1, 'tap second bar');
+assert(barIndexAt(layout.left + 3 * (layout.barWidth + layout.gap) + 2, 80, 400, 220, 7) === 3, 'tap fourth bar');
+assert(barIndexAt(0, 80, 400, 220, 7) === -1, 'miss left of plot');
+assert(barIndexAt(200, 0, 400, 220, 7) === -1, 'miss above plot');
 
 const dir = GLib.build_filenamev([
     GLib.get_tmp_dir(),
@@ -135,6 +144,21 @@ assert(wellbeingTodayKey(historyNow) === '2026-09-03', 'wellbeing today is 3 Sep
 assert(byDate['2026-09-03'] === 4 * 3600 + 21 * 60, 'thursday active 4h 21m');
 assert(byDate['2026-08-30'] === 5 * 3600 + 39 * 60, 'sunday active 5h 39m');
 assert(byDate['2026-08-31'] === 12 * 3600 + 9 * 60, 'monday active 12h 9m');
+
+const openNow = localUnix(2026, 9, 3, 16, 0);
+const stillActive = secondsByDateFromTransitions([
+    {oldState: 0, newState: 1, wallTimeSecs: localUnix(2026, 9, 3, 14, 0)},
+], openNow);
+assert(stillActive['2026-09-03'] === 2 * 3600, 'open ACTIVE interval adds now minus start');
+
+const twoAm = localUnix(2026, 9, 4, 2, 0);
+assert(wellbeingTodayKey(twoAm) === '2026-09-03', '02:00 local is previous wellbeing day');
+const acrossDawn = secondsByDateFromTransitions([
+    {oldState: 0, newState: 1, wallTimeSecs: localUnix(2026, 9, 3, 22, 0)},
+    {oldState: 1, newState: 0, wallTimeSecs: localUnix(2026, 9, 4, 5, 0)},
+], localUnix(2026, 9, 4, 12, 0));
+assert(acrossDawn['2026-09-03'] === 5 * 3600, 'before 03:00 stays on previous wellbeing day');
+assert(acrossDawn['2026-09-04'] === 2 * 3600, 'after 03:00 is the next wellbeing day');
 
 const historyPath = GLib.build_filenamev([dir, 'session-active-history.json']);
 Gio.File.new_for_path(historyPath).replace_contents(

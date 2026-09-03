@@ -5,6 +5,15 @@ All notable changes to Digital Wellbeing for Linux are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and version names match `metadata.json`.
 
+## [1.4] - 2026-09-04
+
+### Changed
+
+- Tapping a weekday bar opens focused-app usage for that day, not always today
+- App activity and details subpages have Back and Close in the header
+- Days before the extension was installed show an empty app view; the graph still uses GNOME screen time
+- Screen Time graph is documented as GNOME Shell TimeLimitsManager + logind session edges (Settings only displays that file; wellbeing day starts at 03:00 local)
+
 ## [1.3] - 2026-09-03
 
 ### Changed

@@ -12,7 +12,7 @@ import {resolveApp} from './lib/apps.js';
 import {AppDonut, ScreenTimeCard} from './lib/charts.js';
 import {formatScreenTime} from './lib/duration.js';
 import {SessionHistory} from './lib/sessionHistory.js';
-import {UsageStore, groupAppsForDonut} from './lib/usageStore.js';
+import {UsageStore, groupAppsForDonut, parseDateKey} from './lib/usageStore.js';
 
 const KEY_SHOW_INDICATOR = 'show-indicator';
 const KEY_FORMAT = 'format';
@@ -44,6 +44,49 @@ function pushSubpage(window, page) {
     return false;
 }
 
+function popSubpage(window) {
+    if (typeof window.pop_subpage === 'function')
+        window.pop_subpage();
+}
+
+function wrapSubpage(title, content, window) {
+    const header = new Adw.HeaderBar({
+        show_end_title_buttons: false,
+        show_start_title_buttons: false,
+    });
+
+    const autoBack = 'show_back_button' in header;
+    if (autoBack)
+        header.show_back_button = true;
+    else {
+        const back = new Gtk.Button({
+            icon_name: 'go-previous-symbolic',
+            tooltip_text: _('Back'),
+            css_classes: ['flat'],
+        });
+        back.connect('clicked', () => popSubpage(window));
+        header.pack_start(back);
+    }
+
+    const close = new Gtk.Button({
+        icon_name: 'window-close-symbolic',
+        tooltip_text: _('Close'),
+        css_classes: ['flat'],
+    });
+    close.connect('clicked', () => popSubpage(window));
+    header.pack_end(close);
+
+    const toolbar = new Adw.ToolbarView();
+    toolbar.add_top_bar(header);
+    toolbar.set_content(content);
+
+    return new Adw.NavigationPage({
+        title,
+        can_pop: true,
+        child: toolbar,
+    });
+}
+
 function rebuildAppList(listBox, apps) {
     let child = listBox.get_first_child();
     while (child) {
@@ -55,7 +98,7 @@ function rebuildAppList(listBox, apps) {
     if (apps.length === 0) {
         listBox.append(new Adw.ActionRow({
             title: _('No applications yet'),
-            subtitle: _('Use your computer with the extension enabled and time will show up here.'),
+            subtitle: _('Per-app time is only kept after this extension was installed. Older days still have GNOME screen time on the graph.'),
         }));
         return;
     }
@@ -89,6 +132,16 @@ function makeScrolled(child) {
     return scrolled;
 }
 
+function dayTitle(store, dateKey) {
+    if (!dateKey || dateKey === store.todayKey())
+        return _('Today');
+    try {
+        return parseDateKey(dateKey).format('%A, %d %B');
+    } catch (_error) {
+        return dateKey;
+    }
+}
+
 function createAppFlow(store, window) {
     const donut = new AppDonut();
     const listBox = new Gtk.ListBox({
@@ -110,11 +163,8 @@ function createAppFlow(store, window) {
     }));
     detailsBox.append(listBox);
 
-    const detailsPage = new Adw.NavigationPage({
-        title: _('App activity details'),
-        can_pop: true,
-        child: makeScrolled(detailsBox),
-    });
+    const detailsPage = wrapSubpage(
+        _('App activity details'), makeScrolled(detailsBox), window);
 
     const button = new Gtk.Button({
         label: _('View app activity details'),
@@ -127,47 +177,62 @@ function createAppFlow(store, window) {
         pushSubpage(window, detailsPage);
     });
 
+    const hint = new Gtk.Label({
+        wrap: true,
+        justify: Gtk.Justification.CENTER,
+        css_classes: ['dim-label', 'dw-hint'],
+    });
+
     const donutBox = new Gtk.Box({
         orientation: Gtk.Orientation.VERTICAL,
         spacing: 16,
         css_classes: ['dw-app-page'],
     });
     donutBox.append(donut);
-    donutBox.append(new Gtk.Label({
-        label: _('Focused apps from today. Totals stay after a reboot.'),
-        wrap: true,
-        justify: Gtk.Justification.CENTER,
-        css_classes: ['dim-label', 'dw-hint'],
-    }));
+    donutBox.append(hint);
     donutBox.append(button);
 
-    const page = new Adw.NavigationPage({
-        title: _('App activity'),
-        can_pop: true,
-        child: makeScrolled(donutBox),
-    });
+    const page = wrapSubpage(_('App activity'), makeScrolled(donutBox), window);
 
-    const refresh = () => {
-        const apps = store.getDayApps(store.todayKey());
+    let currentDateKey = null;
+
+    const refresh = dateKey => {
+        if (dateKey)
+            currentDateKey = dateKey;
+        const key = currentDateKey || store.todayKey();
+        const apps = store.getDayApps(key);
         const grouped = groupAppsForDonut(apps);
+        const title = dayTitle(store, key);
+        const isToday = key === store.todayKey();
+
         donut.setModel({
             slices: grouped.slices.map(slice => ({
                 ...slice,
                 name: slice.isOther ? _('Other') : resolveApp(slice.id, slice.name).name,
             })),
             total: grouped.total,
-            centerTitle: _('Today'),
+            centerTitle: title,
             centerValue: formatScreenTime(grouped.total),
         });
         rebuildAppList(listBox, apps);
         button.sensitive = apps.length > 0;
+        page.title = title;
+        detailsPage.title = _('App activity details');
+
+        if (apps.length > 0) {
+            hint.label = isToday
+                ? _('Focused apps from today. Totals stay after a reboot.')
+                : _('Focused apps from this day. Totals stay after a reboot.');
+        } else {
+            hint.label = _('No per-app log for this day. Tracking started when the extension was installed; older days only have GNOME screen time on the graph.');
+        }
     };
 
     return {
         page,
         refresh,
-        open() {
-            refresh();
+        open(dateKey) {
+            refresh(dateKey || store.todayKey());
             if (page.get_parent())
                 return;
             if (!pushSubpage(window, page))
@@ -240,14 +305,19 @@ function addDisplayPage(window, settings) {
         title: _('Uptime source'),
         subtitle: _('/proc/uptime (first field) — seconds since boot, including suspend (CLOCK_BOOTTIME).'),
     });
+    const screenTimeRow = new Adw.ActionRow({
+        title: _('Screen time (graph)'),
+        subtitle: _('GNOME Shell TimeLimitsManager + logind. Settings → Wellbeing only displays the same session-active history file. Not apps or keystrokes. Wellbeing day starts at 03:00 local.'),
+    });
     const usageRow = new Adw.ActionRow({
         title: _('App usage'),
-        subtitle: _('Focused window while unlocked. Browsers count as one app. Data stays on this machine.'),
+        subtitle: _('Focused window while unlocked, per day after install. Browsers count as one app. Data stays on this machine.'),
     });
 
     displayGroup.add(showRow);
     displayGroup.add(formatRow);
     aboutGroup.add(sourceRow);
+    aboutGroup.add(screenTimeRow);
     aboutGroup.add(usageRow);
     page.add(displayGroup);
     page.add(aboutGroup);
@@ -277,7 +347,7 @@ export default class DigitalWellbeingPreferences extends ExtensionPreferences {
 
         const group = new Adw.PreferencesGroup({
             title: _('Screen Time'),
-            description: _('Active computer time from GNOME, same source as Settings → Wellbeing. Tap the graph for apps.'),
+            description: _('Active computer time from GNOME, same source as Settings → Wellbeing. Tap a day for apps.'),
         });
 
         const sessionHistory = new SessionHistory();
@@ -294,7 +364,7 @@ export default class DigitalWellbeingPreferences extends ExtensionPreferences {
         window.add(screenPage);
 
         const appFlow = createAppFlow(store, window);
-        card.connect('activated', () => appFlow.open());
+        card.connect('activated', (_card, dateKey) => appFlow.open(dateKey));
 
         let reloadId = 0;
         const reload = () => {
