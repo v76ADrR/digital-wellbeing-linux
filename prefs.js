@@ -9,7 +9,7 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {resolveApp} from './lib/apps.js';
-import {AppDonut, ScreenTimeCard, colorForApp, otherSliceColor} from './lib/charts.js';
+import {AppDonut, ScreenTimeCard} from './lib/charts.js';
 import {formatScreenTime} from './lib/duration.js';
 import {SessionHistory} from './lib/sessionHistory.js';
 import {UsageStore, groupAppsForDonut} from './lib/usageStore.js';
@@ -134,10 +134,10 @@ function createAppFlow(store, window) {
     });
     donutBox.append(donut);
     donutBox.append(new Gtk.Label({
-        label: _('Applications you used today. This stays after a reboot.'),
+        label: _('Focused apps from today. Totals stay after a reboot.'),
         wrap: true,
         justify: Gtk.Justification.CENTER,
-        css_classes: ['dim-label'],
+        css_classes: ['dim-label', 'dw-hint'],
     }));
     donutBox.append(button);
 
@@ -154,7 +154,6 @@ function createAppFlow(store, window) {
             slices: grouped.slices.map(slice => ({
                 ...slice,
                 name: slice.isOther ? _('Other') : resolveApp(slice.id, slice.name).name,
-                color: slice.isOther ? otherSliceColor() : colorForApp(slice.id),
             })),
             total: grouped.total,
             centerTitle: _('Today'),
