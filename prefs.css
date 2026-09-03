@@ -1,0 +1,23 @@
+.dw-primary-value {
+    font-size: 28px;
+    font-weight: 800;
+    font-feature-settings: "tnum";
+}
+
+.dw-stat-caption {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.dw-hint {
+    font-size: 12px;
+}
+
+.dw-app-page {
+    margin: 12px 18px 24px;
+}
+
+row.dw-screen-time-row {
+    padding: 16px;
+}

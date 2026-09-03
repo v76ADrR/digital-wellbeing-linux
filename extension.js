@@ -11,6 +11,10 @@ import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/ex
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
+import {formatUptime} from './lib/duration.js';
+import {UsageTracker} from './lib/tracker.js';
+import {UsageStore} from './lib/usageStore.js';
+
 const UPTIME_PATH = '/proc/uptime';
 const UPDATE_INTERVAL_SECONDS = 15;
 const KEY_SHOW_INDICATOR = 'show-indicator';
@@ -30,48 +34,6 @@ function readUptimeSeconds() {
         return Math.floor(seconds);
     } catch (_error) {
         return null;
-    }
-}
-
-function splitDuration(totalSeconds) {
-    const seconds = Math.max(0, Math.floor(totalSeconds));
-    return {
-        days: Math.floor(seconds / 86400),
-        hours: Math.floor((seconds % 86400) / 3600),
-        minutes: Math.floor((seconds % 3600) / 60),
-    };
-}
-
-function formatUptime(totalSeconds, format) {
-    if (totalSeconds === null)
-        return '—';
-
-    const {days, hours, minutes} = splitDuration(totalSeconds);
-
-    switch (format) {
-    case 'clock': {
-        const mm = String(minutes).padStart(2, '0');
-        if (days > 0)
-            return `${days}d ${String(hours).padStart(2, '0')}:${mm}`;
-        return `${hours}:${mm}`;
-    }
-    case 'verbose': {
-        const parts = [];
-        if (days > 0)
-            parts.push(days === 1 ? '1 day' : `${days} days`);
-        if (hours > 0 || days > 0)
-            parts.push(hours === 1 ? '1 hour' : `${hours} hours`);
-        parts.push(minutes === 1 ? '1 minute' : `${minutes} minutes`);
-        return parts.join(' ');
-    }
-    case 'compact':
-    default: {
-        if (days > 0)
-            return `${days}d ${hours}h ${minutes}m`;
-        if (hours > 0)
-            return `${hours}h ${minutes}m`;
-        return `${minutes}m`;
-    }
     }
 }
 
@@ -165,6 +127,10 @@ class UptimeIndicator extends PanelMenu.Button {
 export default class DigitalWellbeingExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
+        this._store = new UsageStore();
+        this._store.load();
+        this._store.saveIfDirty();
+        this._tracker = new UsageTracker(this._store);
         this._indicator = new UptimeIndicator(
             this._settings,
             () => this.openPreferences());
@@ -172,6 +138,10 @@ export default class DigitalWellbeingExtension extends Extension {
     }
 
     disable() {
+        this._tracker?.destroy();
+        this._tracker = null;
+        this._store?.saveIfDirty();
+        this._store = null;
         this._indicator?.destroy();
         this._indicator = null;
         this._settings = null;
