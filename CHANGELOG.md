@@ -5,6 +5,20 @@ All notable changes to Digital Wellbeing for Linux are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and version names match `metadata.json`.
 
+## [1.5] - 2026-09-04
+
+### Added
+
+- Session directory at `~/.local/share/digital-wellbeing@local/sessions/`
+- One JSON file per login/boot (`session-<unix>-<boot-id>.json`) with that session’s focused-app time
+- Display → About text for the sessions folder and that day totals survive a reboot
+
+### Changed
+
+- A shutdown no longer drops the morning’s apps: today is the sum of every session file that day
+- After a reboot, a new session file starts; `usage.json` still holds the merged per-day totals
+- Session files older than 28 days are pruned with the daily history
+
 ## [1.4] - 2026-09-04
 
 ### Added

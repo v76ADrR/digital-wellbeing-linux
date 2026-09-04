@@ -112,8 +112,16 @@ assert(afterReboot.getSessionTotal() === 0, 'new boot clears boot-only session')
 assert(afterReboot.getDayTotal('2026-09-03') === 210, 'daily history survives reboot');
 assert(afterReboot.getDayApps('2026-09-03').length === 2, 'today app list survives reboot');
 
+afterReboot.addUsage('firefox.desktop', 'Firefox', 90);
+afterReboot.save();
+assert(afterReboot.getDayTotal('2026-09-03') === 300, 'afternoon session adds to the same day');
+assert(afterReboot.getSessionTotal() === 90, 'new session is only this boot');
+assert(afterReboot.listSessions().length === 2, 'morning and afternoon session files');
+assert(Gio.File.new_for_path(afterReboot.sessionsDir).query_exists(null), 'sessions directory exists');
+
 const weekStore = new UsageStore({
     path: GLib.build_filenamev([dir, 'week.json']),
+    sessionsDir: GLib.build_filenamev([dir, 'week-sessions']),
     nowUnix: () => now,
     todayKey: () => '2026-09-03',
     readBootId: () => 'boot-1',

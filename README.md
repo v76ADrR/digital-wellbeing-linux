@@ -23,9 +23,12 @@ GNOME Settings → Wellbeing does **not** track apps. It tracks session-level sc
 3. **Settings** only reads/writes `org.gnome.desktop.screen-time-limits` and **displays** the sum. This extension does the same sum: ACTIVE intervals, and if still ACTIVE, `now − last ACTIVE start`. “Today” follows Shell’s wellbeing day, which starts at **03:00 local** (DST-safe), not midnight.
 4. Break reminders (`BreakManager`, Mutter idle monitor, D-Bus `org.gnome.Shell.ScreenTime`) are separate. Parental `malcontent-timerd` is also separate; when those limits are off, the graph is still logind + the JSON file.
 
-The donut is focused-app time **this extension** records (`UsageTracker` + `usage.json`), so days before install have no per-app breakdown. The panel still shows machine uptime from `/proc/uptime`.
+The donut is focused-app time **this extension** records (`UsageTracker` + local files), so days before install have no per-app breakdown. The panel still shows machine uptime from `/proc/uptime`.
 
-App usage: `~/.local/share/digital-wellbeing@local/usage.json`.  
+Each login (boot) is saved as its own JSON file. Example: you use the machine 20 minutes from 11:00, shut down, and come back two hours later — that morning session stays on disk, a new session file starts, and **today’s donut is the sum of both**.
+
+App usage (day totals): `~/.local/share/digital-wellbeing@local/usage.json`  
+Per-login sessions: `~/.local/share/digital-wellbeing@local/sessions/session-<unix>-<boot>.json`  
 Week graph: `~/.local/share/gnome-shell/session-active-history.json`.
 
 ## Install

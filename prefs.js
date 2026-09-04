@@ -311,7 +311,7 @@ function addDisplayPage(window, settings) {
     });
     const usageRow = new Adw.ActionRow({
         title: _('App usage'),
-        subtitle: _('Focused window while unlocked, per day after install. Browsers count as one app. Data stays on this machine.'),
+        subtitle: _('Focused window while unlocked. Each login is a file under ~/.local/share/digital-wellbeing@local/sessions/; the day total sums every session, so a reboot keeps this morning’s apps.'),
     });
 
     displayGroup.add(showRow);
