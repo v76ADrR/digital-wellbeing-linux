@@ -5,6 +5,19 @@ All notable changes to Digital Wellbeing for Linux are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and version names match `metadata.json`.
 
+## [1.6] - 2026-09-05
+
+### Added
+
+- Break Reminders page with native GNOME eyesight and movement reminder switches, movement schedule presets, and completion sounds
+- Advanced controls for each reminder’s duration, interval, delay, screen dimming, optional locking, sounds, and notification preferences
+- In-memory settings and virtual-display GTK tests for break-reminder controls
+
+### Changed
+
+- Break-reminder controls share settings with GNOME Settings → Wellbeing and reflect changes from either application
+- GNOME Shell handles reminder scheduling and natural breaks; opening preferences preserves existing settings, and disabling the extension leaves native reminders configured
+
 ## [1.5] - 2026-09-04
 
 ### Added

@@ -9,6 +9,7 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {resolveApp} from './lib/apps.js';
+import {createBreakRemindersPage} from './lib/breakPreferences.js';
 import {AppDonut, ScreenTimeCard} from './lib/charts.js';
 import {formatScreenTime} from './lib/duration.js';
 import {SessionHistory} from './lib/sessionHistory.js';
@@ -408,9 +409,13 @@ export default class DigitalWellbeingPreferences extends ExtensionPreferences {
             return GLib.SOURCE_CONTINUE;
         });
 
+        const breakReminders = createBreakRemindersPage({gettext: _});
+        window.add(breakReminders.page);
+
         const settingsChangedId = addDisplayPage(window, settings);
 
         window.connect('close-request', () => {
+            breakReminders.destroy();
             if (reloadId)
                 GLib.source_remove(reloadId);
             if (pollId)
