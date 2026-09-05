@@ -14,6 +14,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import {formatUptime} from './lib/duration.js';
 import {UsageTracker} from './lib/tracker.js';
 import {UsageStore} from './lib/usageStore.js';
+import {BreakReminderRuntime} from './lib/breakRuntime.js';
 
 const UPTIME_PATH = '/proc/uptime';
 const UPDATE_INTERVAL_SECONDS = 15;
@@ -131,6 +132,7 @@ export default class DigitalWellbeingExtension extends Extension {
         this._store.load();
         this._store.saveIfDirty();
         this._tracker = new UsageTracker(this._store);
+        this._breakRuntime = new BreakReminderRuntime();
         this._indicator = new UptimeIndicator(
             this._settings,
             () => this.openPreferences());
@@ -140,6 +142,8 @@ export default class DigitalWellbeingExtension extends Extension {
     disable() {
         this._tracker?.destroy();
         this._tracker = null;
+        this._breakRuntime?.destroy();
+        this._breakRuntime = null;
         this._store?.saveIfDirty();
         this._store = null;
         this._indicator?.destroy();
